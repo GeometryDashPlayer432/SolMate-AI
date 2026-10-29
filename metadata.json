@@ -1,0 +1,6 @@
+{
+  "name": "Workspace Hub",
+  "description": "Unified AI-powered Google Workspace hub to search chats, pull Drive files, categorize Gmail, sync Calendar, automate Docs workflows, manage Tasks, Slides, Keep, and Contacts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,142 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User preferences and workspace profile",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "defaultView": { "type": "string" },
+        "aiAssistantEnabled": { "type": "boolean" },
+        "subscribeToUpdates": { "type": "boolean" },
+        "welcomeSent": { "type": "boolean" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "email"]
+    },
+    "DocWorkflow": {
+      "title": "DocWorkflow",
+      "description": "Document workflow and AI approval pipeline",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "docId": { "type": "string" },
+        "docTitle": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "in_review", "approved", "rejected"] },
+        "approverEmail": { "type": "string" },
+        "requesterEmail": { "type": "string" },
+        "aiReview": { "type": "string" },
+        "approvalNotes": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "title", "status"]
+    },
+    "UserNote": {
+      "title": "UserNote",
+      "description": "Keep-style notes synchronized across devices",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "color": { "type": "string" },
+        "isPinned": { "type": "boolean" },
+        "tags": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "title"]
+    },
+    "EmailPriorityRule": {
+      "title": "EmailPriorityRule",
+      "description": "User configuration for sorting and categorizing Gmail",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "category": { "type": "string", "enum": ["urgent", "action_required", "meetings", "newsletters", "general"] },
+        "keywords": { "type": "string" },
+        "minPriorityScore": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "category"]
+    },
+    "GatewayLog": {
+      "title": "GatewayLog",
+      "description": "Unified API gateway request telemetry and execution log",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "service": { "type": "string" },
+        "endpoint": { "type": "string" },
+        "status": { "type": "string" },
+        "durationMs": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["userId", "service", "endpoint", "status"]
+    },
+    "SystemUpdate": {
+      "title": "SystemUpdate",
+      "description": "Live release notes and platform update changelogs",
+      "type": "object",
+      "properties": {
+        "version": { "type": "string" },
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "details": { "type": "string" },
+        "category": { "type": "string", "enum": ["feature", "improvement", "security", "announcement"] },
+        "sentByBot": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["version", "title", "summary", "createdAt"]
+    },
+    "UserNotification": {
+      "title": "UserNotification",
+      "description": "User notifications received from the bot or system",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["welcome", "update", "promo", "system"] },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "title", "message", "type"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Stores user profile and workspace configuration"
+    },
+    "/doc_workflows/{workflowId}": {
+      "schema": "DocWorkflow",
+      "description": "Stores document approval workflow states"
+    },
+    "/notes/{noteId}": {
+      "schema": "UserNote",
+      "description": "Stores Keep-style notes and ideas"
+    },
+    "/email_priorities/{priorityId}": {
+      "schema": "EmailPriorityRule",
+      "description": "Stores personalized email categorization rules"
+    },
+    "/gateway_logs/{logId}": {
+      "schema": "GatewayLog",
+      "description": "Stores unified API gateway activity"
+    },
+    "/system_updates/{updateId}": {
+      "schema": "SystemUpdate",
+      "description": "Stores system release updates and changelog history"
+    },
+    "/notifications/{notifId}": {
+      "schema": "UserNotification",
+      "description": "Stores user notifications and bot messages"
+    }
+  }
+}

@@ -1,0 +1,109 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Validation functions
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() <= 128 &&
+             data.email is string && data.email.size() <= 256;
+    }
+
+    function isValidDocWorkflow(data) {
+      return data.userId is string && data.userId.size() <= 128 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.status in ['draft', 'in_review', 'approved', 'rejected'];
+    }
+
+    function isValidUserNote(data) {
+      return data.userId is string && data.userId.size() <= 128 &&
+             data.title is string && data.title.size() <= 200;
+    }
+
+    function isValidEmailPriority(data) {
+      return data.userId is string && data.userId.size() <= 128 &&
+             data.category in ['urgent', 'action_required', 'meetings', 'newsletters', 'general'];
+    }
+
+    function isValidGatewayLog(data) {
+      return data.userId is string && data.userId.size() <= 128 &&
+             data.service is string && data.service.size() <= 64 &&
+             data.endpoint is string && data.endpoint.size() <= 256;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && isValidId(userId) && request.auth.uid == userId && isValidUserProfile(incoming());
+      allow update: if isSignedIn() && isValidId(userId) && request.auth.uid == userId && isValidUserProfile(incoming());
+      allow delete: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+    }
+
+    // Document Workflows
+    match /doc_workflows/{workflowId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.approverEmail == request.auth.token.email);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(workflowId) && incoming().userId == request.auth.uid && isValidDocWorkflow(incoming());
+      allow update: if isSignedIn() && isValidId(workflowId) && (existing().userId == request.auth.uid || existing().approverEmail == request.auth.token.email) && isValidDocWorkflow(incoming()) && incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && isValidId(workflowId) && existing().userId == request.auth.uid;
+    }
+
+    // Notes Collection (Google Keep style)
+    match /notes/{noteId} {
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(noteId) && incoming().userId == request.auth.uid && isValidUserNote(incoming());
+      allow update: if isSignedIn() && isValidId(noteId) && existing().userId == request.auth.uid && incoming().userId == existing().userId && isValidUserNote(incoming());
+      allow delete: if isSignedIn() && isValidId(noteId) && existing().userId == request.auth.uid;
+    }
+
+    // Email Priorities Collection
+    match /email_priorities/{priorityId} {
+      allow get, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(priorityId) && incoming().userId == request.auth.uid && isValidEmailPriority(incoming());
+      allow update: if isSignedIn() && isValidId(priorityId) && existing().userId == request.auth.uid && incoming().userId == existing().userId && isValidEmailPriority(incoming());
+      allow delete: if isSignedIn() && isValidId(priorityId) && existing().userId == request.auth.uid;
+    }
+
+    // Unified API Gateway telemetry logs
+    match /gateway_logs/{logId} {
+      allow get, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(logId) && incoming().userId == request.auth.uid && isValidGatewayLog(incoming());
+      allow update, delete: if false;
+    }
+
+    // System Updates & Changelogs
+    match /system_updates/{updateId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(updateId);
+    }
+
+    // User Notifications
+    match /notifications/{notifId} {
+      allow get, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(notifId) && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(notifId) && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && isValidId(notifId) && resource.data.userId == request.auth.uid;
+    }
+  }
+}
